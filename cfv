@@ -30,6 +30,7 @@ help() {
     echo -e "\t-u\t\tUpdate changed checksums"
     echo -e "\t-d\t\tAdd date to previous checksum version"
     echo -e "\t-b DIR\tBase directory for the operations"
+    echo -e "By default, the program will *create* checksums"
     echo -e "Version ${VERSION}"
     exit 0
 }
