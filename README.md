@@ -25,11 +25,12 @@ Most UNIX-like OS have `md5sum`, `sha256sum` and `sha512sum` by default.
 
 ```
 Usage: cfv [-hqdcu] [-b DIR] DIR [DIR1 ...]
-        -h              Display help
-        -q              Quiet(er) mode
-        -c              Check existing checksums
-        -u              Update changed checksums
-        -d              Add date to previous checksum version
+        -h      Display help
+        -q      Do not print checksums
+        -c      Check existing checksums
+        -u      Update changed checksums
+        -d      Add date to previous checksum version
+        -a ALGO Select checksum algorithm: b3, md5, sha256, sha512. Default is b3
         -b DIR  Base directory for the operations
-        By default the programm will create checksums
+By default, the program will *create* checksums
 ```
