@@ -12,6 +12,7 @@
 ## Variables & constants
 VERSION="0.9"
 MODE="create"
+DEFAULT_ALGO="b3"
 QUIET=
 #FORCE=
 BASEDIR=
@@ -24,11 +25,12 @@ declare -a ALGO
 
 help() {
     echo "Usage: $(basename "$0") [-hqdcu] [-b DIR] DIR [DIR1 ...]"
-    echo -e "\t-h\t\tDisplay help"
-    echo -e "\t-q\t\tDo not print checksums"
-    echo -e "\t-c\t\tCheck existing checksums"
-    echo -e "\t-u\t\tUpdate changed checksums"
-    echo -e "\t-d\t\tAdd date to previous checksum version"
+    echo -e "\t-h\tDisplay help"
+    echo -e "\t-q\tDo not print checksums"
+    echo -e "\t-c\tCheck existing checksums"
+    echo -e "\t-u\tUpdate changed checksums"
+    echo -e "\t-d\tAdd date to previous checksum version"
+    echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
     echo -e "\t-b DIR\tBase directory for the operations"
     echo -e "By default, the program will *create* checksums"
     echo -e "Version ${VERSION}"
@@ -120,7 +122,7 @@ done
 
 # default algo
 if (( ${#ALGO[@]} == 0 )); then
-    ALGO+=( "b3" )
+    ALGO+=( "${DEFAULT_ALGO}" )
 fi
 
 # check existence of checksum prog in PATH
