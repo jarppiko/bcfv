@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## cfv - script the check, create and update checksums over dir tree
+## cfv - Bash script the check, create and update checksums over dir tree
 
 ## MODE logic
 # create (detault) 	: calculate all checksums
