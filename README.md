@@ -2,6 +2,8 @@
 
 cfv is a Bash frontend to checksum programs (SHA, Blake3, MD5) to calculate, update and verify checksums through directory tree. Inspired by (legacy) Python 2.7 based [cfv](https://github.com/cfv-project/cfv). 
 
+`cfv` is very simple. It creates checksum (.checksum.xxx) files for each directory with files. The checksum file format is always the native file format for the underlying checksum program. The suffix of the checksum file varies by checksum algorithm (.b3 for Blake3, sha256 for SHA-256).  
+
 ## Install
 
 1. Copy `cfv` to PATH and give it exec permissions
