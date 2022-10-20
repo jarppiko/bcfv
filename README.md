@@ -21,7 +21,7 @@ chmod a+rx /usr/local/bin/cfv
 * SHA-256: `sha256sum`
 * SHA-512: `sha512sum`
 
-Most UNIX-like OS have `md5sum`, `sha256sum` and `sha512sum` by default. 
+Most UNIX-like OS have `md5sum`, `sha256sum` and `sha512sum` installed by default. 
 
 ## Usage
 
