@@ -44,4 +44,4 @@ I wrote `bcfv` since my old trusted Python 2.7 based [cfv](https://github.com/cf
 
 However, it seems the cfv project has been resurrected and a Python 3.x based version is about to come out. I have not made any performance benchmarking yet, but I believe `cfv` will outperform `bcfv`. 
 
-Performance never was a priority for `bcfv`, but a reliable operation and an implementation that would require zero maintenance and had minimal dependencies. I also wanted to be able toe verify the checksums directly with the underlying checksum tools (`b3sum`, `sha256sum`, etc.)
+Performance never was a priority for `bcfv`, but a reliable operation and an implementation that would require minimal maintenance and had minimal dependencies. I also wanted to be able to verify the checksums directly with the underlying checksum tools (`b3sum`, `sha256sum`, etc.)
