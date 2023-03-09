@@ -146,6 +146,9 @@ done
 set -u
 
 # shellcheck disable=SC2094
+N_FILES=0
+N_NOK=0
+N_OK=0
 
 for dir in "${DIRS[@]}"; do
 	# cd "${dir}" || continue
@@ -182,7 +185,7 @@ for dir in "${DIRS[@]}"; do
 				[ -n "${QUIET}" ] || echo "# Directory: ${d}"
 
 				# calculate checksums for files not present in CHECKSUM_FILE
-				list_missing_files "${CHECKSUM_FILE}" | xargs -r  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
+				list_missing_files "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
 
 				# calculate checksum for files IN CHECKSUM_FILE modified later than then CHECKSUM_FILE
 				if [ -s "${CHECKSUM_FILE}" ]; then
