@@ -29,6 +29,7 @@ help() {
     echo -e "\t-q\tDo not print checksums"
     echo -e "\t-c\tCheck existing checksums"
     echo -e "\t-u\tUpdate changed checksums"
+	echo -e "\t-l\tList checksums"    
     echo -e "\t-d\tAdd date to previous checksum version"
     echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
     echo -e "\t-b DIR\tBase directory for the operations"
@@ -52,7 +53,9 @@ file_mdate() {
 
 # print the files present in a checksum file in sorted order
 chksum_files() {
-	[ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
+        # [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
+      	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort 
+
 }
 
 # list files in current dir in sorted order
@@ -65,35 +68,54 @@ list_files() {
 list_missing_files() {
 	(( "${#}" == 1 )) || error "list_missing_files() expects a single argument"
 	local CHECKSUM_FILE="${1}"
-	comm -23 <( list_files ) <( chksum_files  "${CHECKSUM_FILE}" )
+	if [ -f "${CHECKSUM_FILE}" ]; then 
+		comm -23 <( list_files ) <( chksum_files  "${CHECKSUM_FILE}" )
+	else
+		list_files
+	fi
 }
+
+# adds directory path in front of files read from pipe
+print_path_chksum() {
+	local DIR="  ${1}/"
+	awk -v dir="${DIR}" '{ sub(/  /,dir,$0) }1'
+}
+
+print_path() {
+	local DIR="${1}/"
+	awk -v dir="${DIR}" '{ print dir $0 }'	
+}
+
 
 if [ ${#} -eq 0 ]; then
     help
 fi
 
-while getopts 'cuhqdb:a:' option
+while getopts 'cudlhqb:a:' option
 do
 # shellcheck disable=SC2220
     case "$option" in
     h)
-         help
-         ;;
+        help
+        ;;
     q)
         QUIET="yes"
         ;;
     c)
         MODE="check"
-         ;;
+        ;;
     u)
         MODE="update"
-         ;;
+        ;;
+	l)
+        MODE="list"
+        ;;
     d)
         DATE="yes"
-         ;;
-#    f)
-#        FORCE="yes"
-#         ;;
+        ;;
+#   f)
+#      FORCE="yes"
+#      ;;
     a)
 	case "${OPTARG}" in
 		b3)
@@ -160,26 +182,24 @@ for dir in "${DIRS[@]}"; do
 
 			if [ "${MODE}" = "check" ]; then
   				# [ -f "${CHECKSUM_FILE}" ] || continue
+					# echo "# Directory: ${d}"
 				if [ -n "${QUIET}" ]; then
-					[ -f "${CHECKSUM_FILE}" ] && "${alg}sum"  --check --quiet "${CHECKSUM_FILE}"  >> "${CHECKSUM_TMP}" 2>&1
-					list_missing_files "${CHECKSUM_FILE}" | sed -e 's/$/ : CHECKSUM MISSING/' >> "${CHECKSUM_TMP}" 2>&1
-					if [ -s "${CHECKSUM_TMP}" ]; then
-						echo "# Directory: ${d}"
-						cat "${CHECKSUM_TMP}"
-					fi
-					rm "${CHECKSUM_TMP}"
+					[[ -f "${CHECKSUM_FILE}" ]] && "${alg}sum" --check --quiet "${CHECKSUM_FILE}" | print_path "${d}"
 				else
-					echo "# Directory: ${d}"
-					[ -f "${CHECKSUM_FILE}" ] && "${alg}sum"  --check "${CHECKSUM_FILE}"
-					list_missing_files "${CHECKSUM_FILE}" | sed -e 's/$/ : CHECKSUM MISSING/'
+					[[ -f "${CHECKSUM_FILE}" ]] && "${alg}sum" --check "${CHECKSUM_FILE}" | print_path "${d}"
 				fi
+				list_missing_files "${CHECKSUM_FILE}" | print_path "${d}" | sed -e 's/$/: CHECKSUM MISSING/'
+
 				continue
-			fi
 
-			touch "${CHECKSUM_TMP}"
-			if [ "${MODE}" = "update" ]; then
+			elif [ "${MODE}" = "list" ]; then
+			    print_path_chksum "${d}" < "${CHECKSUM_FILE}"
 
-				[ -n "${QUIET}" ] || echo "# Directory: ${d}"
+				continue
+
+			elif [ "${MODE}" = "update" ]; then
+				touch "${CHECKSUM_TMP}"
+				## [ -n "${QUIET}" ] || echo "# Directory: ${d}"
 
 				# calculate checksums for files not present in CHECKSUM_FILE
 				list_missing_files "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
@@ -208,28 +228,30 @@ for dir in "${DIRS[@]}"; do
 						continue
 					else
 						# print dir name if QUIET
-						[ -n "${QUIET}" ] && echo "# Directory: ${d}"
-						cat "${CHECKSUM_TMP}.DIFF"
+						# [ -n "${QUIET}" ] && echo "# Directory: ${d}"
+						print_path_chksum "${d}" < "${CHECKSUM_TMP}.DIFF"
 						rm "${CHECKSUM_TMP}.DIFF"
 					fi
 				else
-                                	if [ -n "${QUIET}" ]; then
-                                        	list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" 2>&1
+				   
+					if [ -n "${QUIET}" ]; then
+						list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" 2>&1
 						if [ -s "${CHECKSUM_TMP}" ]; then
-							echo "# Directory: ${d}"
-							cat "${CHECKSUM_TMP}"
+							# echo "# Directory: ${d}"
+							print_path_chksum "${d}" < "${CHECKSUM_TMP}"
 						fi
-                                	else
-                                        	list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}"
-                                	fi
+					else
+						list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
+					fi
 				fi
 
 			else	# create
-				echo "# Directory: ${d}"
+				# echo "# Directory: ${d}"
+				 touch "${CHECKSUM_TMP}"
 				if [ -n "${QUIET}" ]; then
-					list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" 2>&1
+					list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" # 2>&1
 				else
-					list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}"
+					list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
 				fi
 			fi
 
