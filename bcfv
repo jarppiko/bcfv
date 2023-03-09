@@ -146,9 +146,6 @@ done
 set -u
 
 # shellcheck disable=SC2094
-N_FILES=0
-N_NOK=0
-N_OK=0
 
 for dir in "${DIRS[@]}"; do
 	# cd "${dir}" || continue
