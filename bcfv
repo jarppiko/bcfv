@@ -10,7 +10,7 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.9"
+VERSION="0.9.1"
 MODE="create"
 DEFAULT_ALGO="b3"
 QUIET=
