@@ -40,8 +40,15 @@ By default, the program will *create* checksums
 ```
 ## Motivation
 
-I wrote `bcfv` since my old trusted Python 2.7 based [cfv](https://github.com/cfv-project/cfv) stopped working as distros like Debian/Ubuntu moved to Python 3. [cfv](https://github.com/cfv-project/cfv) had been long dormant and unmaintained, so I decided to write the same functionality using [Bash](https://www.gnu.org/software/bash/) shell only hoping I would not need to touch the code again for the next 20 years :-) 
+I wrote `bcfv` since my old trusted Python 2.7 based [cfv](https://github.com/cfv-project/cfv) 
+stopped working as distros like Debian/Ubuntu moved to Python 3. 
+[cfv](https://github.com/cfv-project/cfv) had been long dormant and unmaintained, 
+so I decided to write the same functionality using [Bash](https://www.gnu.org/software/bash/) 
+shell only hoping I would not need to touch the code again for the next 20 years :-) 
 
-However, it seems the cfv project has been resurrected and a Python 3.x based version is about to come out. I have not made any performance benchmarking yet, but I believe `cfv` will outperform `bcfv`. 
+However, it seems the cfv project has been resurrected and a Python 3.x based version is about to come out. 
+I have not made any performance benchmarking yet, but I believe `cfv` will outperform `bcfv`. 
 
-Performance never was a priority for `bcfv`, but a reliable operation and an implementation that would require minimal maintenance and had minimal dependencies. I also wanted to be able to verify the checksums directly with the underlying checksum tools (`b3sum`, `sha256sum`, etc.)
+Performance never was a priority for `bcfv`, but a reliable operation and an implementation 
+that would require minimal maintenance and had minimal dependencies. I also wanted to be 
+able to verify the checksums directly with the underlying checksum tools (`b3sum`, `sha256sum`, etc.)
