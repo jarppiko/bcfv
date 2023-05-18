@@ -10,7 +10,7 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.9.1"
+VERSION="0.9.2"
 MODE="create"
 DEFAULT_ALGO="b3"
 QUIET=
@@ -29,7 +29,7 @@ help() {
     echo -e "\t-q\tDo not print checksums"
     echo -e "\t-c\tCheck existing checksums"
     echo -e "\t-u\tUpdate changed checksums"
-	echo -e "\t-l\tList checksums"    
+    echo -e "\t-l\tList checksums"
     echo -e "\t-d\tAdd date to previous checksum version"
     echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
     echo -e "\t-b DIR\tBase directory for the operations"
@@ -233,7 +233,7 @@ for dir in "${DIRS[@]}"; do
 						rm "${CHECKSUM_TMP}.DIFF"
 					fi
 				else
-				   
+ 
 					if [ -n "${QUIET}" ]; then
 						list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" 2>&1
 						if [ -s "${CHECKSUM_TMP}" ]; then
