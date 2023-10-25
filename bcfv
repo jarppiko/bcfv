@@ -202,13 +202,13 @@ for dir in "${DIRS[@]}"; do
 				## [ -n "${QUIET}" ] || echo "# Directory: ${d}"
 
 				# calculate checksums for files not present in CHECKSUM_FILE
-				list_missing_files "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
+				list_missing_files "${CHECKSUM_FILE}" | grep -v "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
 
 				# calculate checksum for files IN CHECKSUM_FILE modified later than then CHECKSUM_FILE
 				if [ -s "${CHECKSUM_FILE}" ]; then
 					while read -r line; do
 						file="$(echo "${line}" | sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/')"
-						if [ -f "${file}" ];then
+						if [ -f "${file}" ] && [ "${file}" != "${CHECKSUM_FILE}" ];then
 							if [ "${file}" -nt "${CHECKSUM_FILE}" ]; then
 								"${alg}sum" -- "${file}" >> "${CHECKSUM_TMP}" 2>&1
 							else
@@ -223,7 +223,7 @@ for dir in "${DIRS[@]}"; do
 					# keep the old checksum file if there isn't any difference
 					diff "${CHECKSUM_FILE}" "${CHECKSUM_TMP}" | grep  '^[<>]' > "${CHECKSUM_TMP}.DIFF"
 					if [ "${PIPESTATUS[0]}" = "0" ]; then
-						touch  "${CHECKSUM_FILE}"
+						# touch  "${CHECKSUM_FILE}"  # this causes back up to update the checksums even nothing has changed. 
 						rm "${CHECKSUM_TMP}" "${CHECKSUM_TMP}.DIFF"
 						continue
 					else
@@ -231,6 +231,7 @@ for dir in "${DIRS[@]}"; do
 						# [ -n "${QUIET}" ] && echo "# Directory: ${d}"
 						print_path_chksum "${d}" < "${CHECKSUM_TMP}.DIFF"
 						rm "${CHECKSUM_TMP}.DIFF"
+                        # update checksum, make it a function first
 					fi
 				else
  
