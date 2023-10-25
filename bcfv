@@ -10,13 +10,14 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.9.2"
+VERSION="0.9.3"
 MODE="create"
 DEFAULT_ALGO="b3"
 QUIET=
 #FORCE=
 BASEDIR=
 DATE=
+TOUCH=
 CHECKSUM=".checksum"
 
 declare -a ALGO
@@ -24,25 +25,26 @@ declare -a ALGO
 ## Functions
 
 help() {
-    echo "Usage: $(basename "$0") [-hqdcu] [-b DIR] DIR [DIR1 ...]"
-    echo -e "\t-h\tDisplay help"
-    echo -e "\t-q\tDo not print checksums"
-    echo -e "\t-c\tCheck existing checksums"
-    echo -e "\t-u\tUpdate changed checksums"
-    echo -e "\t-l\tList checksums"
-    echo -e "\t-d\tAdd date to previous checksum version"
-    echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
-    echo -e "\t-b DIR\tBase directory for the operations"
-    echo -e "By default, the program will *create* checksums"
-    echo -e "Version ${VERSION}"
-    exit 0
+	echo "Usage: $(basename "$0") [-hqdcu] [-b DIR] DIR [DIR1 ...]"
+	echo -e "\t-h\tDisplay help"
+	echo -e "\t-q\tDo not print checksums"
+	echo -e "\t-c\tCheck existing checksums"
+	echo -e "\t-u\tUpdate changed checksums"
+	echo -e "\t-l\tList checksums"
+	echo -e "\t-t\tUpdate checksum timestamp even no checksums updated"
+	echo -e "\t-d\tAdd date to previous checksum version"
+	echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
+	echo -e "\t-b DIR\tBase directory for the operations"
+	echo -e "By default, the program will *create* checksums"
+	echo -e "Version ${VERSION}"
+	exit 0
 }
 
 # Print error message and exit
 error() {
-        MSG="${1}"
-        echo "Error: ${MSG}"
-        exit 1
+		MSG="${1}"
+		echo "Error: ${MSG}"
+		exit 1
 }
 
 # Print file modification time
@@ -53,8 +55,8 @@ file_mdate() {
 
 # print the files present in a checksum file in sorted order
 chksum_files() {
-        # [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
-      	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort 
+		# [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
+	  	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort 
 
 }
 
@@ -88,35 +90,38 @@ print_path() {
 
 
 if [ ${#} -eq 0 ]; then
-    help
+	help
 fi
 
-while getopts 'cudlhqb:a:' option
+while getopts 'cudlhqtb:a:' option
 do
 # shellcheck disable=SC2220
-    case "$option" in
-    h)
-        help
-        ;;
-    q)
-        QUIET="yes"
-        ;;
-    c)
-        MODE="check"
-        ;;
-    u)
-        MODE="update"
-        ;;
+	case "$option" in
+	h)
+		help
+		;;
+	q)
+		QUIET="yes"
+		;;
+	c)
+		MODE="check"
+		;;
+	u)
+		MODE="update"
+		;;
 	l)
-        MODE="list"
-        ;;
-    d)
-        DATE="yes"
-        ;;
+		MODE="list"
+		;;
+	d)
+		DATE="yes"
+		;;
+	t)
+		TOUCH="yes"
+		;;
 #   f)
 #      FORCE="yes"
 #      ;;
-    a)
+	a)
 	case "${OPTARG}" in
 		b3)
 			ALGO+=( "b3" )
@@ -136,15 +141,15 @@ do
 		;;
 	esac
 	;;
-    b)
-        BASEDIR="${OPTARG}"
-        ;;
-    esac
+	b)
+		BASEDIR="${OPTARG}"
+		;;
+	esac
 done
 
 # default algo
 if (( ${#ALGO[@]} == 0 )); then
-    ALGO+=( "${DEFAULT_ALGO}" )
+	ALGO+=( "${DEFAULT_ALGO}" )
 fi
 
 # check existence of checksum prog in PATH
@@ -159,10 +164,10 @@ fi
 shift "$(( "$OPTIND" - 1 ))"
 declare -a DIRS
 while test "$#" -gt 0; do
-        if [ -d "${1}" ]; then
-                DIRS+=( "${1}" )
-        fi
-        shift
+		if [ -d "${1}" ]; then
+				DIRS+=( "${1}" )
+		fi
+		shift
 done
 
 set -u
@@ -193,7 +198,7 @@ for dir in "${DIRS[@]}"; do
 				continue
 
 			elif [ "${MODE}" = "list" ]; then
-			    print_path_chksum "${d}" < "${CHECKSUM_FILE}"
+				print_path_chksum "${d}" < "${CHECKSUM_FILE}"
 
 				continue
 
@@ -202,13 +207,13 @@ for dir in "${DIRS[@]}"; do
 				## [ -n "${QUIET}" ] || echo "# Directory: ${d}"
 
 				# calculate checksums for files not present in CHECKSUM_FILE
-				list_missing_files "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
+				list_missing_files "${CHECKSUM_FILE}" | grep -v "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
 
 				# calculate checksum for files IN CHECKSUM_FILE modified later than then CHECKSUM_FILE
 				if [ -s "${CHECKSUM_FILE}" ]; then
 					while read -r line; do
 						file="$(echo "${line}" | sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/')"
-						if [ -f "${file}" ];then
+						if [ -f "${file}" ] && [ "${file}" != "${CHECKSUM_FILE}" ];then
 							if [ "${file}" -nt "${CHECKSUM_FILE}" ]; then
 								"${alg}sum" -- "${file}" >> "${CHECKSUM_TMP}" 2>&1
 							else
@@ -223,7 +228,8 @@ for dir in "${DIRS[@]}"; do
 					# keep the old checksum file if there isn't any difference
 					diff "${CHECKSUM_FILE}" "${CHECKSUM_TMP}" | grep  '^[<>]' > "${CHECKSUM_TMP}.DIFF"
 					if [ "${PIPESTATUS[0]}" = "0" ]; then
-						touch  "${CHECKSUM_FILE}"
+						# -t / TOUCH update the checksums even nothing has changed. 
+						[ -n "${TOUCH}" ] && touch "${CHECKSUM_FILE}"  
 						rm "${CHECKSUM_TMP}" "${CHECKSUM_TMP}.DIFF"
 						continue
 					else
@@ -231,6 +237,7 @@ for dir in "${DIRS[@]}"; do
 						# [ -n "${QUIET}" ] && echo "# Directory: ${d}"
 						print_path_chksum "${d}" < "${CHECKSUM_TMP}.DIFF"
 						rm "${CHECKSUM_TMP}.DIFF"
+						# update checksum, make it a function first
 					fi
 				else
  
