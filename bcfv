@@ -10,15 +10,18 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.9.3"
+VERSION="0.10.0"
 MODE="create"
 DEFAULT_ALGO="b3"
 QUIET=
-#FORCE=
+FORCE=
 BASEDIR=
 DATE=
 TOUCH=
-CHECKSUM=".checksum"
+
+if [ -z "${CHECKSUM}" ]; then
+  CHECKSUM=".checksum"
+fi
 
 declare -a ALGO
 
@@ -56,7 +59,7 @@ file_mdate() {
 # print the files present in a checksum file in sorted order
 chksum_files() {
 		# [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
-	  	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort 
+	  	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort
 
 }
 
@@ -70,7 +73,7 @@ list_files() {
 list_missing_files() {
 	(( "${#}" == 1 )) || error "list_missing_files() expects a single argument"
 	local CHECKSUM_FILE="${1}"
-	if [ -f "${CHECKSUM_FILE}" ]; then 
+	if [ -f "${CHECKSUM_FILE}" ]; then
 		comm -23 <( list_files ) <( chksum_files  "${CHECKSUM_FILE}" )
 	else
 		list_files
@@ -85,7 +88,7 @@ print_path_chksum() {
 
 print_path() {
 	local DIR="${1}/"
-	awk -v dir="${DIR}" '{ print dir $0 }'	
+	awk -v dir="${DIR}" '{ print dir $0 }'
 }
 
 
@@ -93,7 +96,7 @@ if [ ${#} -eq 0 ]; then
 	help
 fi
 
-while getopts 'cudlhqtb:a:' option
+while getopts 'cudflhqtb:a:' option
 do
 # shellcheck disable=SC2220
 	case "$option" in
@@ -118,9 +121,9 @@ do
 	t)
 		TOUCH="yes"
 		;;
-#   f)
-#      FORCE="yes"
-#      ;;
+  f)
+     FORCE="yes"
+     ;;
 	a)
 	case "${OPTARG}" in
 		b3)
@@ -146,6 +149,11 @@ do
 		;;
 	esac
 done
+
+if [[ "${CHECKSUM}" !=  .checksum* && "${FORCE}" != "yes" ]]; then
+  echo "Error: non-standard checksum defined and force (-f) is not set: ${CHECKSUM}" >&2
+  exit 1
+fi
 
 # default algo
 if (( ${#ALGO[@]} == 0 )); then
