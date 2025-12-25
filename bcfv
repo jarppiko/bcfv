@@ -10,7 +10,7 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.10.0"
+VERSION="0.10.1"
 MODE="create"
 DEFAULT_ALGO="b3"
 QUIET=
@@ -236,8 +236,8 @@ for dir in "${DIRS[@]}"; do
 					# keep the old checksum file if there isn't any difference
 					diff "${CHECKSUM_FILE}" "${CHECKSUM_TMP}" | grep  '^[<>]' > "${CHECKSUM_TMP}.DIFF"
 					if [ "${PIPESTATUS[0]}" = "0" ]; then
-						# -t / TOUCH update the checksums even nothing has changed. 
-						[ -n "${TOUCH}" ] && touch "${CHECKSUM_FILE}"  
+						# -t / TOUCH update the checksums even nothing has changed.
+						[ -n "${TOUCH}" ] && touch "${CHECKSUM_FILE}"
 						rm "${CHECKSUM_TMP}" "${CHECKSUM_TMP}.DIFF"
 						continue
 					else
@@ -271,7 +271,7 @@ for dir in "${DIRS[@]}"; do
 			fi
 
 			if [ -n "${DATE}" ] && [ -f "${CHECKSUM_FILE}" ]; then
-				mv "${CHECKSUM_FILE}" "${CHECKSUM_FILE}_$(file_mdate "${CHECKSUM_FILE}")"
+				mv "${CHECKSUM_FILE}" "${CHECKSUM}_$(file_mdate "${CHECKSUM_FILE}").${alg}"
 			fi
 			mv "${CHECKSUM_TMP}" "${CHECKSUM_FILE}"
 			# delete empty checksum files
