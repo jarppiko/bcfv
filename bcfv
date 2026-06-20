@@ -21,7 +21,7 @@ TOUCH=
 ALGOS_RE='.*\.\(b3\|md5\|sha256\|sha512\)$'
 
 if [ -z "${CHECKSUM}" ]; then
-  CHECKSUM=".checksum"
+	CHECKSUM=".checksum"
 fi
 
 declare -a ALGO
@@ -47,9 +47,9 @@ help() {
 
 # Print error message and exit
 error() {
-		MSG="${1}"
-		echo "Error: ${MSG}"
-		exit 1
+	MSG="${1}"
+	echo "Error: ${MSG}"
+	exit 1
 }
 
 # Print file modification time
@@ -57,11 +57,10 @@ file_mdate() {
 	date -r "${1}" +"%Y%m%d"
 }
 
-
 # print the files present in a checksum file in sorted order
 chksum_files() {
-		# [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
-	  	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort
+	# [ -f "${CHECKSUM_FILE}" ] && sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/' -- "${1}" | sort
+	[ -f "${1}" ] && cut -d \  -f 3- "${1}" | sort
 
 }
 
@@ -73,10 +72,10 @@ list_files() {
 # usage: list_missing_files CHECKSUM_FILE
 # list files not in CHECKSUM_FILE in sorted order
 list_missing_files() {
-	(( "${#}" == 1 )) || error "list_missing_files() expects a single argument"
+	(("${#}" == 1)) || error "list_missing_files() expects a single argument"
 	local CHECKSUM_FILE="${1}"
 	if [ -f "${CHECKSUM_FILE}" ]; then
-		comm -23 <( list_files ) <( chksum_files  "${CHECKSUM_FILE}" )
+		comm -23 <(list_files) <(chksum_files "${CHECKSUM_FILE}")
 	else
 		list_files
 	fi
@@ -93,14 +92,12 @@ print_path() {
 	awk -v dir="${DIR}" '{ print dir $0 }'
 }
 
-
 if [ ${#} -eq 0 ]; then
 	help
 fi
 
-while getopts 'cuwflhqtb:a:' option
-do
-# shellcheck disable=SC2220
+while getopts 'cuwflhqtb:a:' option; do
+	# shellcheck disable=SC2220
 	case "$option" in
 	h)
 		help
@@ -123,61 +120,61 @@ do
 	t)
 		TOUCH="yes"
 		;;
-  	f)
+	f)
 		FORCE="yes"
-	 	;;
+		;;
 	a)
-	case "${OPTARG}" in
+		case "${OPTARG}" in
 		b3)
-			ALGO+=( "b3" )
-		;;
+			ALGO+=("b3")
+			;;
 		sha256)
-			ALGO+=("sha256" )
-		;;
+			ALGO+=("sha256")
+			;;
 		sha512)
-			ALGO+=( "sha512" )
-		;;
+			ALGO+=("sha512")
+			;;
 		md5)
-			ALGO+=( "md5" )
-		;;
+			ALGO+=("md5")
+			;;
 		*)
 			echo "Unknown hash algorithm ${OPTARG}"
 			exit 1
+			;;
+		esac
 		;;
-	esac
-	;;
 	b)
 		BASEDIR="${OPTARG}"
 		;;
 	esac
 done
 
-if [[ "${CHECKSUM}" !=  .checksum* && "${FORCE}" != "yes" ]]; then
-  echo "Error: non-standard checksum defined and force (-f) is not set: ${CHECKSUM}" >&2
-  exit 1
+if [[ "${CHECKSUM}" != .checksum* && "${FORCE}" != "yes" ]]; then
+	echo "Error: non-standard checksum defined and force (-f) is not set: ${CHECKSUM}" >&2
+	exit 1
 fi
 
 # default algo
-if (( ${#ALGO[@]} == 0 )); then
-	ALGO+=( "${DEFAULT_ALGO}" )
+if ((${#ALGO[@]} == 0)); then
+	ALGO+=("${DEFAULT_ALGO}")
 fi
 
 # check existence of checksum prog in PATH
 for alg in "${ALGO[@]}"; do
-	builtin type -p "${alg}sum" &> /dev/null || error "${alg}sum not found in PATH"
+	builtin type -p "${alg}sum" &>/dev/null || error "${alg}sum not found in PATH"
 done
 
 # Read rest of the params into DIRS
 if [ -n "${BASEDIR}" ]; then
-	pushd  "${BASEDIR}" > /dev/null || error "Cannot change into ${BASEDIR}"
+	pushd "${BASEDIR}" >/dev/null || error "Cannot change into ${BASEDIR}"
 fi
-shift "$(( "$OPTIND" - 1 ))"
+shift "$(("$OPTIND" - 1))"
 declare -a DIRS
 while test "$#" -gt 0; do
-		if [ -d "${1}" ]; then
-				DIRS+=( "${1}" )
-		fi
-		shift
+	if [ -d "${1}" ]; then
+		DIRS+=("${1}")
+	fi
+	shift
 done
 
 set -u
@@ -187,7 +184,7 @@ set -u
 for dir in "${DIRS[@]}"; do
 	# cd "${dir}" || continue
 	while read -r d; do
-		pushd "${d}"  > /dev/null || continue
+		pushd "${d}" >/dev/null || continue
 		for alg in "${ALGO[@]}"; do
 			CHECKSUM_FILE="${CHECKSUM}.${alg}"
 			CHECKSUM_TMP="${CHECKSUM}.tmp"
@@ -196,8 +193,8 @@ for dir in "${DIRS[@]}"; do
 			[ -f "${CHECKSUM_TMP}" ] && rm "${CHECKSUM_TMP}"
 
 			if [ "${MODE}" = "check" ]; then
-  				# [ -f "${CHECKSUM_FILE}" ] || continue
-					# echo "# Directory: ${d}"
+				# [ -f "${CHECKSUM_FILE}" ] || continue
+				# echo "# Directory: ${d}"
 				if [ -n "${QUIET}" ]; then
 					[[ -f "${CHECKSUM_FILE}" ]] && "${alg}sum" --check --quiet "${CHECKSUM_FILE}" | print_path "${d}"
 				else
@@ -208,7 +205,7 @@ for dir in "${DIRS[@]}"; do
 				continue
 
 			elif [ "${MODE}" = "list" ]; then
-				print_path_chksum "${d}" < "${CHECKSUM_FILE}"
+				print_path_chksum "${d}" <"${CHECKSUM_FILE}"
 
 				continue
 
@@ -217,26 +214,26 @@ for dir in "${DIRS[@]}"; do
 				## [ -n "${QUIET}" ] || echo "# Directory: ${d}"
 
 				# calculate checksums for files not present in CHECKSUM_FILE
-				list_missing_files "${CHECKSUM_FILE}" | grep -v "${CHECKSUM_FILE}" | xargs -r -d "\n"  "${alg}sum" -- >> "${CHECKSUM_TMP}" 2>&1
+				list_missing_files "${CHECKSUM_FILE}" | grep -v "${CHECKSUM_FILE}" | xargs -r -d "\n" "${alg}sum" -- >>"${CHECKSUM_TMP}" 2>&1
 
 				# calculate checksum for files IN CHECKSUM_FILE modified later than then CHECKSUM_FILE
 				if [ -s "${CHECKSUM_FILE}" ]; then
 					while read -r line; do
 						file="$(echo "${line}" | sed -E 's/([0-9a-f]+)[[:blank:]]+(.+)/\2/')"
-						if [ -f "${file}" ] && [ "${file}" != "${CHECKSUM_FILE}" ];then
+						if [ -f "${file}" ] && [ "${file}" != "${CHECKSUM_FILE}" ]; then
 							if [ "${file}" -nt "${CHECKSUM_FILE}" ]; then
-								"${alg}sum" -- "${file}" >> "${CHECKSUM_TMP}" 2>&1
+								"${alg}sum" -- "${file}" >>"${CHECKSUM_TMP}" 2>&1
 							else
-								echo "${line}" >> "${CHECKSUM_TMP}"
+								echo "${line}" >>"${CHECKSUM_TMP}"
 							fi
 						fi
-					done < "${CHECKSUM_FILE}"
+					done <"${CHECKSUM_FILE}"
 
 					# sort in-place
 					sort -k 2 -o "${CHECKSUM_TMP}" "${CHECKSUM_TMP}"
 
 					# keep the old checksum file if there isn't any difference
-					diff "${CHECKSUM_FILE}" "${CHECKSUM_TMP}" | grep  '^[<>]' > "${CHECKSUM_TMP}.DIFF"
+					diff "${CHECKSUM_FILE}" "${CHECKSUM_TMP}" | grep '^[<>]' >"${CHECKSUM_TMP}.DIFF"
 					if [ "${PIPESTATUS[0]}" = "0" ]; then
 						# -t / TOUCH update the checksums even nothing has changed.
 						[ -n "${TOUCH}" ] && touch "${CHECKSUM_FILE}"
@@ -245,17 +242,17 @@ for dir in "${DIRS[@]}"; do
 					else
 						# print dir name if QUIET
 						# [ -n "${QUIET}" ] && echo "# Directory: ${d}"
-						print_path_chksum "${d}" < "${CHECKSUM_TMP}.DIFF"
+						print_path_chksum "${d}" <"${CHECKSUM_TMP}.DIFF"
 						rm "${CHECKSUM_TMP}.DIFF"
 						# update checksum, make it a function first
 					fi
 				else
- 
+
 					if [ -n "${QUIET}" ]; then
-						list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" 2>&1
+						list_files | xargs -r -d "\n" "${alg}sum" -- >"${CHECKSUM_TMP}" 2>&1
 						if [ -s "${CHECKSUM_TMP}" ]; then
 							# echo "# Directory: ${d}"
-							print_path_chksum "${d}" < "${CHECKSUM_TMP}"
+							print_path_chksum "${d}" <"${CHECKSUM_TMP}"
 						fi
 					else
 						list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
@@ -264,9 +261,9 @@ for dir in "${DIRS[@]}"; do
 
 			elif [ "${MODE}" = "create" ]; then
 				# echo "# Directory: ${d}"
-				 touch "${CHECKSUM_TMP}"
+				touch "${CHECKSUM_TMP}"
 				if [ -n "${QUIET}" ]; then
-					list_files | xargs -r -d "\n" "${alg}sum" -- > "${CHECKSUM_TMP}" # 2>&1
+					list_files | xargs -r -d "\n" "${alg}sum" -- >"${CHECKSUM_TMP}" # 2>&1
 				else
 					list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
 				fi
@@ -282,10 +279,10 @@ for dir in "${DIRS[@]}"; do
 			[ ! -s "${CHECKSUM_FILE}" ] && rm "${CHECKSUM_FILE}"
 
 		done
-		popd > /dev/null || error "Could not return to dir"
-	done < <(find  "${dir}" -type d)
+		popd >/dev/null || error "Could not return to dir"
+	done < <(find "${dir}" -type d)
 done
 
 if [ -n "${BASEDIR}" ]; then
-	popd > /dev/null  || error "Could not return to dir"
+	popd >/dev/null || error "Could not return to dir"
 fi
