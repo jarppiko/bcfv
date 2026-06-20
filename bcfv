@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## bcfv - Bash script the check, create and update checksums over dir tree
 
@@ -10,14 +10,15 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.10.1"
-MODE="create"
+VERSION="0.11.0"
+MODE="check"
 DEFAULT_ALGO="b3"
 QUIET=
 FORCE=
 BASEDIR=
-DATE=
+OVERWRITE=
 TOUCH=
+ALGOS_RE='.*\.\(b3\|md5\|sha256\|sha512\)$'
 
 if [ -z "${CHECKSUM}" ]; then
   CHECKSUM=".checksum"
@@ -31,14 +32,14 @@ help() {
 	echo "Usage: $(basename "$0") [-hqdcu] [-b DIR] DIR [DIR1 ...]"
 	echo -e "\t-h\tDisplay help"
 	echo -e "\t-q\tDo not print checksums"
-	echo -e "\t-c\tCheck existing checksums"
+	echo -e "\t-c\tCreate checksums"
 	echo -e "\t-u\tUpdate changed checksums"
 	echo -e "\t-l\tList checksums"
 	echo -e "\t-t\tUpdate checksum timestamp even no checksums updated"
-	echo -e "\t-d\tAdd date to previous checksum version"
+	echo -e "\t-w\tOverwrite existing checksums. Default is to keep old checksums with a date suffix"
 	echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
 	echo -e "\t-b DIR\tBase directory for the operations"
-	echo -e "By default, the program will *create* checksums"
+	echo -e "By default, the program will *check* checksums"
 	echo -e "Version ${VERSION}"
 	exit 0
 }
@@ -65,7 +66,7 @@ chksum_files() {
 
 # list files in current dir in sorted order
 list_files() {
-	find . -maxdepth 1 -type f ! -name "${CHECKSUM}.*" -printf '%P\n' | sort
+	find . -maxdepth 1 -type f ! -iregex "${ALGOS_RE}" ! -name "${CHECKSUM_TMP}" -printf '%P\n' | sort
 }
 
 # usage: list_missing_files CHECKSUM_FILE
@@ -96,7 +97,7 @@ if [ ${#} -eq 0 ]; then
 	help
 fi
 
-while getopts 'cudflhqtb:a:' option
+while getopts 'cuwflhqtb:a:' option
 do
 # shellcheck disable=SC2220
 	case "$option" in
@@ -107,7 +108,7 @@ do
 		QUIET="yes"
 		;;
 	c)
-		MODE="check"
+		MODE="create"
 		;;
 	u)
 		MODE="update"
@@ -115,13 +116,13 @@ do
 	l)
 		MODE="list"
 		;;
-	d)
-		DATE="yes"
+	w)
+		OVERWRITE="yes"
 		;;
 	t)
 		TOUCH="yes"
 		;;
-  f)
+  	f)
      FORCE="yes"
      ;;
 	a)
@@ -270,7 +271,7 @@ for dir in "${DIRS[@]}"; do
 				fi
 			fi
 
-			if [ -n "${DATE}" ] && [ -f "${CHECKSUM_FILE}" ]; then
+			if [ -z "${OVERWRITE}" ] && [ -f "${CHECKSUM_FILE}" ]; then
 				mv "${CHECKSUM_FILE}" "${CHECKSUM}_$(file_mdate "${CHECKSUM_FILE}").${alg}"
 			fi
 			mv "${CHECKSUM_TMP}" "${CHECKSUM_FILE}"
