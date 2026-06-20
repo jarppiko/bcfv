@@ -10,7 +10,7 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.11.0"
+VERSION="0.11.1"
 MODE="check"
 DEFAULT_ALGO="b3"
 QUIET=
@@ -37,6 +37,7 @@ help() {
 	echo -e "\t-l\tList checksums"
 	echo -e "\t-t\tUpdate checksum timestamp even no checksums updated"
 	echo -e "\t-w\tOverwrite existing checksums. Default is to keep old checksums with a date suffix"
+	echo -e "\t-f\tForce non-standard checksum file name. Default is '.checksum' to prevent accidental overwrites."
 	echo -e "\t-a ALGO\tSelect checksum algorithm: b3, md5, sha256, sha512. Default is ${DEFAULT_ALGO}"
 	echo -e "\t-b DIR\tBase directory for the operations"
 	echo -e "By default, the program will *check* checksums"
@@ -123,8 +124,8 @@ do
 		TOUCH="yes"
 		;;
   	f)
-     FORCE="yes"
-     ;;
+		FORCE="yes"
+	 	;;
 	a)
 	case "${OPTARG}" in
 		b3)
@@ -261,7 +262,7 @@ for dir in "${DIRS[@]}"; do
 					fi
 				fi
 
-			else	# create
+			elif [ "${MODE}" = "create" ]; then
 				# echo "# Directory: ${d}"
 				 touch "${CHECKSUM_TMP}"
 				if [ -n "${QUIET}" ]; then
@@ -269,6 +270,8 @@ for dir in "${DIRS[@]}"; do
 				else
 					list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
 				fi
+			else
+				error "Unknown mode ${MODE}"
 			fi
 
 			if [ -z "${OVERWRITE}" ] && [ -f "${CHECKSUM_FILE}" ]; then
