@@ -19,7 +19,6 @@ BASEDIR=
 OVERWRITE=
 TOUCH=
 DOTDIRS=
-ALGOS_RE='.*\.\(b3\|md5\|sha256\|sha512\)$'
 
 if [ -z "${CHECKSUM}" ]; then
 	CHECKSUM=".checksum"
@@ -74,6 +73,33 @@ chksum_files() {
 # list files in current dir in sorted order
 list_files() {
 	((${#DIR_FILES[@]})) && printf '%s\n' "${DIR_FILES[@]}"
+}
+
+collect_dir_files() {
+	local file
+	DIR_FILES=()
+	shopt -s dotglob nullglob
+	for file in *; do
+		[[ -f "${file}" && ! -L "${file}" ]] || continue
+		case "${file,,}" in
+		*.b3 | *.md5 | *.sha256 | *.sha512) continue ;;
+		esac
+		[[ "${file}" == "${CHECKSUM}.tmp"* ]] && continue
+		DIR_FILES+=("${file}")
+	done
+	shopt -u dotglob nullglob
+}
+
+# Hash directly for typical directories; retain xargs batching for large ones.
+hash_dir_files() {
+	local alg="${1}"
+	if ((${#DIR_FILES[@]} == 0)); then
+		return
+	elif ((${#DIR_FILES[@]} <= 512)); then
+		"${alg}sum" -- "${DIR_FILES[@]}"
+	else
+		list_files | xargs -r -d "\n" "${alg}sum" --
+	fi
 }
 
 # usage: list_missing_files CHECKSUM_FILE
@@ -198,7 +224,7 @@ for dir in "${DIRS[@]}"; do
 			continue
 		fi
 		pushd "${d}" >/dev/null || continue
-		mapfile -t DIR_FILES < <(find . -maxdepth 1 -type f ! -iregex "${ALGOS_RE}" ! -name "${CHECKSUM}.tmp*" -printf '%P\n' | sort)
+		collect_dir_files
 		for alg in "${ALGO[@]}"; do
 			CHECKSUM_FILE="${CHECKSUM}.${alg}"
 			CHECKSUM_TMP="${CHECKSUM}.tmp"
@@ -280,11 +306,10 @@ for dir in "${DIRS[@]}"; do
 
 			elif [ "${MODE}" = "create" ]; then
 				# echo "# Directory: ${d}"
-				touch "${CHECKSUM_TMP}"
 				if [ -n "${QUIET}" ]; then
-					list_files | xargs -r -d "\n" "${alg}sum" -- >"${CHECKSUM_TMP}" # 2>&1
+					hash_dir_files "${alg}" >"${CHECKSUM_TMP}" # 2>&1
 				else
-					list_files | xargs -r -d "\n" "${alg}sum" -- | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
+					hash_dir_files "${alg}" | tee "${CHECKSUM_TMP}" | print_path_chksum "${d}"
 				fi
 			else
 				error "Unknown mode ${MODE}"
