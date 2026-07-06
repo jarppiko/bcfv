@@ -8,10 +8,16 @@ on:
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
-  test:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+  unit-tests:
     name: Run bcfv tests
     runs-on: ubuntu-latest
     steps:
