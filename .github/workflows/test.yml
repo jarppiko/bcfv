@@ -1,0 +1,22 @@
+name: "BCFV Test Suite"
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    name: Run bcfv tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bcfv test suite
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          bash ./tests/test_bcfv.sh
