@@ -10,7 +10,7 @@
 ## QUIET logic		: print only changes + dirnames when changes
 
 ## Variables & constants
-VERSION="0.12.1"
+VERSION="0.12.2"
 MODE="check"
 DEFAULT_ALGO="b3"
 QUIET=
@@ -30,7 +30,7 @@ declare -a DIR_FILES
 ## Functions
 
 help() {
-	echo "Usage: $(basename "$0") [-hqdcu] [-b DIR] DIR [DIR1 ...]"
+	echo "Usage: bcfv [-hqdcu] [-b DIR] DIR [DIR1 ...]"
 	echo -e "\t-h\tDisplay help"
 	echo -e "\t-q\tDo not print checksums"
 	echo -e "\t-c\tCreate checksums"
